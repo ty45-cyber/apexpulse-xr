@@ -1,0 +1,23 @@
+{
+  "name": "apexpulse-xr",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@iwsdk/core": "^0.5.3",
+    "three": "npm:super-three@0.181.0"
+  },
+  "overrides": {
+    "three": "npm:super-three@0.181.0"
+  },
+  "devDependencies": {
+    "@iwsdk/vite-plugin-dev": "^0.5.3",
+    "typescript": "^5.6.3",
+    "vite": "^7.0.0"
+  }
+}

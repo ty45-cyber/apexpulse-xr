@@ -1,0 +1,58 @@
+{
+  "version": "iwsdk.project.v1",
+  "scene": "public/scenes/main.iwsdk.scene.json",
+  "assets": {
+    "module": "src/assets"
+  },
+  "components": {
+    "module": "src/components"
+  },
+  "world": {
+    "xr": {
+      "mode": "ar",
+      "offer": "once",
+      "referenceSpace": "local-floor",
+      "restoreCameraOnExit": true,
+      "features": {
+        "handTracking": true,
+        "hitTest": true,
+        "anchors": true
+      }
+    },
+    "render": {
+      "fov": 62,
+      "near": 0.03,
+      "far": 100,
+      "camera": {
+        "position": [0, 1.25, 0],
+        "lookAt": [0, 1.11, -0.40]
+      }
+    },
+    "input": {
+      "canvasPointerEvents": {
+        "enabled": true,
+        "activeDuringXR": true
+      }
+    },
+    "features": {
+      "locomotion": false,
+      "grabbing": {
+        "useHandPinchForGrab": true
+      },
+      "physics": false,
+      "sceneUnderstanding": true,
+      "environmentRaycast": true,
+      "spatialUI": {
+        "kit": "horizon",
+        "preferredColorScheme": "dark"
+      }
+    }
+  },
+  "dev": {
+    "emulator": {
+      "device": "metaQuest3",
+      "environment": "living_room",
+      "activation": "localhost"
+    }
+  }
+}

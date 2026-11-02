@@ -1,0 +1,212 @@
+<!-- public/ui/apexpulse-hud.uikitml -->
+<meta preferred-color-scheme="dark" />
+<style>
+  .strategist-shell {
+    width: 580px;
+    padding: 18px;
+    background-color: #070b14;
+    opacity: 0.95;
+    border-radius: 22px;
+    border-width: 2px;
+    border-color: #38bdf8;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .header-bar {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .brand-title {
+    font-size: 18px;
+    font-weight: bold;
+    color: #f8fafc;
+  }
+  .career-pill {
+    font-size: 12px;
+    font-weight: bold;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    padding-left: 10px;
+    padding-right: 10px;
+    border-radius: 999px;
+    background-color: #b45309;
+    color: #fef3c7;
+  }
+  .stage-banner {
+    padding-top: 10px;
+    padding-bottom: 10px;
+    padding-left: 12px;
+    padding-right: 12px;
+    border-radius: 12px;
+    background-color: #0f172a;
+    border-width: 1px;
+    border-color: #0284c7;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .stage-title {
+    font-size: 15px;
+    font-weight: bold;
+    color: #38bdf8;
+  }
+  .stage-brief {
+    font-size: 12px;
+    color: #cbd5e1;
+  }
+  .dial-strip {
+    padding-top: 6px;
+    padding-bottom: 6px;
+    padding-left: 10px;
+    padding-right: 10px;
+    border-radius: 8px;
+    background-color: #1e1b4b;
+    border-width: 1px;
+    border-color: #6366f1;
+    align-items: center;
+  }
+  .dial-text {
+    font-size: 13px;
+    font-weight: bold;
+    color: #e0e7ff;
+  }
+  .stages-grid {
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .stage-card {
+    flex-grow: 1;
+    flex-basis: 0;
+    padding: 8px;
+    border-radius: 10px;
+    background-color: #111827;
+    border-width: 1px;
+    border-color: #334155;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .stage-card-name {
+    font-size: 12px;
+    font-weight: bold;
+    color: #f8fafc;
+  }
+  .stage-card-meta {
+    font-size: 11px;
+    color: #facc15;
+  }
+  .verdict-box {
+    padding-top: 10px;
+    padding-bottom: 10px;
+    padding-left: 12px;
+    padding-right: 12px;
+    border-radius: 12px;
+    background-color: #052e16;
+    border-width: 1px;
+    border-color: #10b981;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .verdict-headline {
+    font-size: 14px;
+    font-weight: bold;
+    color: #34d399;
+  }
+  .verdict-detail {
+    font-size: 12px;
+    color: #d1fae5;
+  }
+  .action-row {
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 2px;
+  }
+  .action-btn {
+    flex-grow: 1;
+    flex-basis: 0;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    padding-left: 10px;
+    padding-right: 10px;
+    border-radius: 10px;
+    background-color: #1e293b;
+    border-width: 1px;
+    border-color: #475569;
+    align-items: center;
+    justify-content: center;
+  }
+  .action-btn:hover {
+    background-color: #334155;
+  }
+  .action-btn-gold {
+    flex-grow: 1;
+    flex-basis: 0;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    padding-left: 10px;
+    padding-right: 10px;
+    border-radius: 10px;
+    background-color: #422006;
+    border-width: 1px;
+    border-color: #facc15;
+    align-items: center;
+    justify-content: center;
+  }
+  .action-btn-gold:hover {
+    background-color: #713f12;
+  }
+  .btn-label {
+    font-size: 12px;
+    font-weight: bold;
+    color: #f8fafc;
+  }
+</style>
+
+<div class="strategist-shell" id="apexpulse-root">
+  <div class="header-bar">
+    <span class="brand-title">BEAT THE RACE STRATEGIST | 3-STAGE LOOP</span>
+    <span class="career-pill" id="hud-career-pill">DAY 1 STREAK | ELO 1200 (ROOKIE ANALYST)</span>
+  </div>
+
+  <div class="stage-banner">
+    <span class="stage-title" id="hud-active-stage-title">STAGE 1/3 | TURN 4 HAIRPIN: The Late-Apex Switchback</span>
+    <span class="stage-brief" id="hud-active-stage-brief">Delay braking (+5m to +9m) and tuck inside (-1.2m to -1.8m) to gain at least -0.110s without exceeding 96% Kamm tire grip.</span>
+  </div>
+
+  <div class="dial-strip">
+    <span class="dial-text" id="hud-dial-readout">DIALED FORK: BRAKE +7.0m | APEX -1.5m | KAMM GRIP: 88%</span>
+  </div>
+
+  <div class="stages-grid">
+    <div class="stage-card" id="card-stage-1">
+      <span class="stage-card-name">1. Turn 4 Switchback</span>
+      <span class="stage-card-meta" id="stage-1-status">[---] LOCK | Best: --.---s</span>
+    </div>
+    <div class="stage-card" id="card-stage-2">
+      <span class="stage-card-name">2. Sector 1 Crest</span>
+      <span class="stage-card-meta" id="stage-2-status">[---] LOCK | Best: --.---s</span>
+    </div>
+    <div class="stage-card" id="card-stage-3">
+      <span class="stage-card-name">3. Sector 3 Slingshot</span>
+      <span class="stage-card-meta" id="stage-3-status">[---] LOCK | Best: --.---s</span>
+    </div>
+  </div>
+
+  <div class="verdict-box">
+    <span class="verdict-headline" id="ai-headline">POKE CAR OR PULL TO VISOR FOR 1:1 HALO COCKPIT</span>
+    <span class="verdict-detail" id="ai-insight">Pull Car A toward your eyes (&lt; 0.24m) to enter the 1:1 FIA Halo Cockpit, or pinch the Turn 4 lockup cloud to rewind time.</span>
+  </div>
+
+  <div class="action-row">
+    <button class="action-btn" id="btn-next-stage">
+      <span class="btn-label">Cycle Stage (1-3)</span>
+    </button>
+    <button class="action-btn" id="btn-run-fork">
+      <span class="btn-label">Execute What-If Fork</span>
+    </button>
+    <button class="action-btn-gold" id="btn-judge-streak">
+      <span class="btn-label">Judge Sim: 14-Day Streak</span>
+    </button>
+  </div>
+</div>
