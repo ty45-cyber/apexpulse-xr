@@ -6,10 +6,13 @@ import {
   CylinderGeometry,
   DirectionalLight,
   Group,
+  MathUtils,
   Mesh,
   MeshStandardMaterial,
+  PointLight,
   PokeInteractable,
   RayInteractable,
+  RingGeometry,
   SphereGeometry,
   TorusGeometry,
   UIKitMLAsset,
@@ -18,6 +21,7 @@ import {
 } from '@iwsdk/core';
 import projectOptions from 'virtual:iwsdk-project';
 import { SpatialDopplerAudio } from './audio/SpatialDopplerAudio';
+import { BroadcastCockpitOverlay } from './ui/BroadcastCockpitOverlay';
 import {
   HandsFirstNode,
   SeatedEnvelopeNode,
@@ -116,20 +120,28 @@ async function bootstrapApexPulseXR() {
   // ============================================================================
   // 4. MIXED REALITY KEY LIGHTING & SPATIAL UIKITML SCOREBOARD HUD
   // ============================================================================
-  world.createTransformEntity(new AmbientLight(0xffffff, 0.92));
-  const keyLight = new DirectionalLight(0x38bdf8, 1.65);
+  world.createTransformEntity(new AmbientLight(0xffffff, 0.95));
+  const keyLight = new DirectionalLight(0x38bdf8, 1.75);
   keyLight.position.set(0.45, 1.9, 0.65);
   world.createTransformEntity(keyLight);
+
+  const cyanFillLight = new PointLight(0x00f0ff, 0.85, 2.4);
+  cyanFillLight.position.set(-0.42, 1.38, -0.22);
+  world.createTransformEntity(cyanFillLight);
+
+  const magentaRimLight = new PointLight(0xff2a85, 0.65, 2.4);
+  magentaRimLight.position.set(0.42, 1.35, -0.28);
+  world.createTransformEntity(magentaRimLight);
 
   let hudAsset: UIKitMLAsset | null = null;
   try {
     hudAsset = await world.assets.instantiate<UIKitMLAsset>('apexpulse-hud');
-    hudAsset.document.setTargetDimensions(0.38, 0.25);
+    hudAsset.document.setTargetDimensions(0.35, 0.205);
     const hudEntity = world.createTransformEntity(hudAsset);
     hudEntity.addComponent(SeatedEnvelopeNode, {
-      targetRadius: 0.49,
+      targetRadius: 0.51,
       azimuthDeg: 0,
-      elevationDeg: 8,
+      elevationDeg: 1.5,
       minRadius: 0.34,
       maxRadius: 0.58,
       maxLateralMeters: 0.28,
@@ -149,25 +161,57 @@ async function bootstrapApexPulseXR() {
   const trackRibbonGeo = telemetryEngine.buildTrackRibbonGeometry(240, 0.015);
   const trackRibbonMat = new MeshStandardMaterial({
     vertexColors: true,
-    roughness: 0.28,
-    metalness: 0.45,
+    roughness: 0.24,
+    metalness: 0.48,
   });
   const trackRibbonMesh = new Mesh(trackRibbonGeo, trackRibbonMat);
   trackTableGroup.add(trackRibbonMesh);
 
-  // Carbon-fiber base ring framing the 0.44m tabletop diorama
-  const baseRingGeo = new TorusGeometry(0.22, 0.003, 12, 64);
+  // Carbon-fiber base ring & concentric holographic telemetry deck framing the 0.44m diorama
+  const baseRingGeo = new TorusGeometry(0.225, 0.0035, 14, 72);
   baseRingGeo.rotateX(Math.PI * 0.5);
   const baseRingMesh = new Mesh(
     baseRingGeo,
     new MeshStandardMaterial({
       color: 0x1e293b,
-      roughness: 0.35,
-      metalness: 0.75,
+      emissive: 0x082f49,
+      emissiveIntensity: 0.45,
+      roughness: 0.3,
+      metalness: 0.8,
     })
   );
   baseRingMesh.position.y = -0.018;
   trackTableGroup.add(baseRingMesh);
+
+  const holoFloorGeo = new RingGeometry(0.11, 0.222, 64);
+  holoFloorGeo.rotateX(-Math.PI * 0.5);
+  const holoFloorMesh = new Mesh(
+    holoFloorGeo,
+    new MeshStandardMaterial({
+      color: 0x061326,
+      emissive: 0x0284c7,
+      emissiveIntensity: 0.14,
+      transparent: true,
+      opacity: 0.42,
+      roughness: 0.2,
+    })
+  );
+  holoFloorMesh.position.y = -0.0185;
+  trackTableGroup.add(holoFloorMesh);
+
+  // Start/Finish Telemetry Gantry Arch at u = 0
+  const startPt = telemetryEngine.curve.getPointAt(0);
+  const gantryArch = new Mesh(
+    new TorusGeometry(0.016, 0.0018, 10, 24, Math.PI),
+    new MeshStandardMaterial({
+      color: 0x38bdf8,
+      emissive: 0x00f0ff,
+      emissiveIntensity: 0.9,
+    })
+  );
+  gantryArch.position.set(startPt.x, startPt.y + 0.002, startPt.z);
+  gantryArch.rotation.y = Math.PI * 0.48;
+  trackTableGroup.add(gantryArch);
 
   // Pulsing Emerald AI Apex Beacon
   const apexBeaconGeo = new ConeGeometry(0.01, 0.024, 16);
@@ -225,8 +269,19 @@ async function bootstrapApexPulseXR() {
     });
   }
 
-  // Spawn Miniature Race Cars (Car A: Cyan #00f0ff, Car B: Magenta #ff2a85)
-  const carBodyGeo = new BoxGeometry(0.012, 0.006, 0.026);
+  // Spawn Sculpted Miniature F1 Race Cars (Car A: Cyan #00f0ff, Car B: Magenta #ff2a85)
+  const carBodyGeo = new BoxGeometry(0.01, 0.005, 0.028);
+  const carSidepodGeo = new BoxGeometry(0.015, 0.004, 0.014);
+  const carFrontWingGeo = new BoxGeometry(0.017, 0.0018, 0.004);
+  const carRearWingGeo = new BoxGeometry(0.016, 0.0045, 0.0035);
+  const carWheelGeo = new CylinderGeometry(0.003, 0.003, 0.0032, 10);
+  carWheelGeo.rotateZ(Math.PI * 0.5);
+  const carDarkMat = new MeshStandardMaterial({
+    color: 0x0f172a,
+    roughness: 0.4,
+    metalness: 0.75,
+  });
+
   const brakeVecGeo = new BoxGeometry(0.004, 0.004, 0.022);
   brakeVecGeo.translate(0, 0.006, -0.015);
   const latGVecGeo = new ConeGeometry(0.004, 0.02, 8);
@@ -240,17 +295,40 @@ async function bootstrapApexPulseXR() {
 
   for (let i = 0; i < 2; i++) {
     const carGroup = new Group();
-    const carMesh = new Mesh(
-      carBodyGeo,
-      new MeshStandardMaterial({
-        color: carColors[i],
-        emissive: carColors[i],
-        emissiveIntensity: 0.5,
-        roughness: 0.2,
-        metalness: 0.8,
-      })
-    );
+    const liveryMat = new MeshStandardMaterial({
+      color: carColors[i],
+      emissive: carColors[i],
+      emissiveIntensity: 0.55,
+      roughness: 0.2,
+      metalness: 0.82,
+    });
+    const carMesh = new Mesh(carBodyGeo, liveryMat);
+    carMesh.position.y = 0.002;
     carGroup.add(carMesh);
+
+    const sidepods = new Mesh(carSidepodGeo, liveryMat);
+    sidepods.position.set(0, 0.0015, -0.001);
+    carGroup.add(sidepods);
+
+    const fWing = new Mesh(carFrontWingGeo, carDarkMat);
+    fWing.position.set(0, 0.0005, 0.014);
+    carGroup.add(fWing);
+
+    const rWing = new Mesh(carRearWingGeo, carDarkMat);
+    rWing.position.set(0, 0.005, -0.013);
+    carGroup.add(rWing);
+
+    const wheelOffsets: [number, number][] = [
+      [-0.0085, 0.009],
+      [0.0085, 0.009],
+      [-0.0088, -0.009],
+      [0.0088, -0.009],
+    ];
+    for (const [wx, wz] of wheelOffsets) {
+      const wheel = new Mesh(carWheelGeo, carDarkMat);
+      wheel.position.set(wx, 0.0015, wz);
+      carGroup.add(wheel);
+    }
 
     const brakeMesh = new Mesh(
       brakeVecGeo,
@@ -652,15 +730,33 @@ async function bootstrapApexPulseXR() {
     }
   );
 
+  let broadcastOverlay: BroadcastCockpitOverlay | null = null;
+
   haloCockpitSystem.bindHaloCockpit(
     audioEngine,
     trackTableGroup,
     haloCockpitAnchorEntity,
     (duelTelemetry) => {
       // When the 7.5s First-Person Halo Cockpit Overtake completes, credit the Strategist Stage!
-      challengeSystem.executeCurrentStageFork();
+      const res = challengeSystem.executeCurrentStageFork();
       console.info('[1:1 Halo Cockpit Duel Complete]', duelTelemetry);
-    }
+      broadcastOverlay?.showToast(
+        '1:1 HALO OVERTAKE SEALED!',
+        res
+          ? `${res.verdictHeadline} — Terminal speed ${duelTelemetry.speedKmh} km/h in Gear ${duelTelemetry.gear}.`
+          : `Overtake completed at ${duelTelemetry.speedKmh} km/h!`,
+        'success',
+        5500
+      );
+    },
+    [
+      scrubberGroup,
+      bayGroup,
+      aiDroneGroup,
+      strategistConsoleGroup,
+      recenterMesh,
+      ...(hudAsset ? [hudAsset] : []),
+    ]
   );
 
   winnerPolishSystem.bindWinnerUpgrades(telemetryEngine, audioEngine, {
@@ -804,18 +900,146 @@ async function bootstrapApexPulseXR() {
   });
 
   bindActionButton('btn-run-fork', () => {
+    if (timeLoopSystem.phase === 'CRASH_FROZEN') {
+      timeLoopSystem.releaseElasticSlingshot();
+    }
     aeroDuelSystem.evaluateAeroGameTheoryDuel();
-    challengeSystem.executeCurrentStageFork();
+    const res = challengeSystem.executeCurrentStageFork();
+    if (res) {
+      broadcastOverlay?.showToast(
+        res.verdictHeadline,
+        res.physicsExplanation,
+        res.didBreachTractionLimit ? 'danger' : 'success'
+      );
+    }
+  });
+
+  bindActionButton('btn-halo-cockpit', () => {
+    if (haloCockpitSystem.mode === 'FIRST_PERSON_HALO_COCKPIT') {
+      haloCockpitSystem.exitToMacroPitWall();
+    } else {
+      haloCockpitSystem.enterFirstPersonHaloCockpit();
+    }
   });
 
   bindActionButton('btn-judge-streak', () => {
     challengeSystem.simulate14DayJudgeStreak();
+    winnerPolishSystem.triggerDroneExcitementPulse();
   });
+
+  // Desktop Seated Camera Look Controls (Right-drag to glance around Pit-Wall; [R] to reset)
+  let camYawDeg = 0;
+  let camPitchDeg = -19.3; // Matches lookAt [0, 1.11, -0.40] from [0, 1.25, 0]
+  const applyDesktopCameraLook = () => {
+    if (world.renderer?.xr?.isPresenting || !world.camera) return;
+    const yawRad = MathUtils.degToRad(camYawDeg);
+    const pitchRad = MathUtils.degToRad(camPitchDeg);
+    const lookDist = 0.42;
+    const tx = -Math.sin(yawRad) * Math.cos(pitchRad) * lookDist;
+    const ty = 1.25 + Math.sin(pitchRad) * lookDist;
+    const tz = -Math.cos(yawRad) * Math.cos(pitchRad) * lookDist;
+    world.camera.position.set(0, 1.25, 0);
+    world.camera.lookAt(tx, ty, tz);
+  };
+  const resetDesktopCameraLook = () => {
+    camYawDeg = 0;
+    camPitchDeg = -19.3;
+    applyDesktopCameraLook();
+  };
+
+  container.addEventListener('contextmenu', (e) => e.preventDefault());
+  window.addEventListener('pointermove', (ev) => {
+    if ((ev.buttons & 2) === 2 && !world.renderer?.xr?.isPresenting) {
+      camYawDeg = MathUtils.clamp(camYawDeg + ev.movementX * 0.12, -18, 18);
+      camPitchDeg = MathUtils.clamp(
+        camPitchDeg - ev.movementY * 0.12,
+        -32,
+        -4
+      );
+      applyDesktopCameraLook();
+    }
+  });
+
+  broadcastOverlay = new BroadcastCockpitOverlay({
+    world,
+    sessionEntity,
+    telemetryEngine,
+    audioEngine,
+    scrubSystem,
+    challengeSystem,
+    aeroDuelSystem,
+    timeLoopSystem,
+    haloCockpitSystem,
+    winnerPolishSystem,
+    onResetDesktopCamera: resetDesktopCameraLook,
+  });
+
+  // ============================================================================
+  // 13. PARSE & APPLY DEEP-LINK / JUDGE INVITE URL PARAMETERS (?invite=judge...)
+  // ============================================================================
+  const params = new URLSearchParams(window.location.search);
+  const inviteParam = params.get('invite') || params.get('judge');
+  const stageParam = params.get('stage');
+  const brakeParam = params.get('brake');
+  const apexParam = params.get('apex');
+  const modeParam = params.get('mode');
+
+  if (
+    inviteParam !== null ||
+    stageParam !== null ||
+    brakeParam !== null ||
+    apexParam !== null ||
+    modeParam !== null
+  ) {
+    if (inviteParam && inviteParam !== '0' && inviteParam !== 'false') {
+      challengeSystem.simulate14DayJudgeStreak();
+      winnerPolishSystem.triggerDroneExcitementPulse();
+    }
+    if (stageParam !== null) {
+      const parsedStage = Number(stageParam);
+      if (!Number.isNaN(parsedStage)) {
+        const zeroBased = parsedStage >= 1 && parsedStage <= 3 ? parsedStage - 1 : parsedStage;
+        challengeSystem.selectStage(zeroBased);
+      }
+    }
+    if (brakeParam !== null && !Number.isNaN(Number(brakeParam))) {
+      challengeSystem.setBrakeOffsetDial(Number(brakeParam), false);
+    }
+    if (apexParam !== null && !Number.isNaN(Number(apexParam))) {
+      challengeSystem.setApexShiftDial(Number(apexParam), false);
+    }
+    aeroDuelSystem.evaluateAeroGameTheoryDuel();
+    const forkRes = challengeSystem.executeCurrentStageFork();
+
+    if (modeParam === 'halo' || modeParam === 'cockpit') {
+      haloCockpitSystem.enterFirstPersonHaloCockpit();
+    }
+
+    const activeVm = challengeSystem.getScoreboardViewModel();
+    console.info('[Judge Invite URL Verified]', {
+      invite: inviteParam || 'custom',
+      stage: activeVm.currentStage.stageIndex + 1,
+      brakeMeters: activeVm.dialedBrakeMeters,
+      apexMeters: activeVm.dialedApexMeters,
+      strategistElo: activeVm.strategistElo,
+      streakDays: activeVm.streakDays,
+    });
+
+    broadcastOverlay.showToast(
+      `INVITE SESSION ACTIVE • ${activeVm.currentStage.code}`,
+      forkRes
+        ? `${forkRes.verdictHeadline} — Pre-loaded from invite link (ELO ${activeVm.strategistElo}).`
+        : `14-Day Judge Career & Stage ${activeVm.currentStage.stageIndex + 1} pre-loaded from invite URL.`,
+      'success',
+      6000
+    );
+  }
 
   // Desktop Keyboard Shortcuts for rapid testing in Chrome / IWER Emulator:
   // [H] = Toggle 1:1 Halo Cockpit | [Q]/[E] = Left/Right Pinch Paddle Shift
-  // [A]/[D] = Steer Air-Yoke Left/Right | [J] = 14-Day Judge Streak | [Space] = Execute Fork
+  // [A]/[D] = Steer Air-Yoke Left/Right | [J] = 14-Day Judge Streak | [Space] = Execute Fork | [R] = Reset Cam
   window.addEventListener('keydown', (ev) => {
+    if (ev.target instanceof HTMLInputElement) return;
     audioEngine.unlockAndStart();
     switch (ev.code) {
       case 'KeyH':
@@ -845,10 +1069,25 @@ async function bootstrapApexPulseXR() {
         break;
       case 'KeyJ':
         challengeSystem.simulate14DayJudgeStreak();
+        winnerPolishSystem.triggerDroneExcitementPulse();
+        break;
+      case 'KeyR':
+        resetDesktopCameraLook();
         break;
       case 'Space':
+        ev.preventDefault();
+        if (timeLoopSystem.phase === 'CRASH_FROZEN') {
+          timeLoopSystem.releaseElasticSlingshot();
+        }
         aeroDuelSystem.evaluateAeroGameTheoryDuel();
-        challengeSystem.executeCurrentStageFork();
+        const res = challengeSystem.executeCurrentStageFork();
+        if (res) {
+          broadcastOverlay?.showToast(
+            res.verdictHeadline,
+            res.physicsExplanation,
+            res.didBreachTractionLimit ? 'danger' : 'success'
+          );
+        }
         break;
     }
   });

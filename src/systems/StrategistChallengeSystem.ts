@@ -223,6 +223,38 @@ export class StrategistChallengeSystem extends createSystem({
     this.syncDomScoreboard();
   }
 
+  public setBrakeOffsetDial(meters: number, autoRun = true): void {
+    const clamped = Number(MathUtils.clamp(meters, -4.0, 16.5).toFixed(1));
+    this.queries.challengeState.entities.forEach((entity) => {
+      entity.setValue(
+        StrategistChallengeState,
+        'dialedBrakeOffsetMeters',
+        clamped
+      );
+    });
+    if (autoRun) {
+      this.executeCurrentStageFork();
+    } else {
+      this.syncDomScoreboard();
+    }
+  }
+
+  public setApexShiftDial(meters: number, autoRun = true): void {
+    const clamped = Number(MathUtils.clamp(meters, -2.6, 2.4).toFixed(1));
+    this.queries.challengeState.entities.forEach((entity) => {
+      entity.setValue(
+        StrategistChallengeState,
+        'dialedApexShiftMeters',
+        clamped
+      );
+    });
+    if (autoRun) {
+      this.executeCurrentStageFork();
+    } else {
+      this.syncDomScoreboard();
+    }
+  }
+
   public stepBrakeOffsetDial(stepMeters = 2.5): void {
     this.queries.challengeState.entities.forEach((entity) => {
       let current =
@@ -624,6 +656,20 @@ export class StrategistChallengeSystem extends createSystem({
 
     setText('ai-headline', vm.lastVerdictHeadline);
     setText('ai-insight', vm.lastVerdictDetail);
+
+    const verdictBox = this.hudDocument?.getElementById('hud-verdict-box') as any;
+    if (verdictBox && typeof verdictBox.setProperties === 'function') {
+      verdictBox.setProperties({
+        backgroundColor: vm.lastPassed ? '#052e16' : '#3b0712',
+        borderColor: vm.lastPassed ? '#10b981' : '#f43f5e',
+      });
+    }
+    const headlineEl = this.hudDocument?.getElementById('ai-headline') as any;
+    if (headlineEl && typeof headlineEl.setProperties === 'function') {
+      headlineEl.setProperties({
+        color: vm.lastPassed ? '#34d399' : '#fda4af',
+      });
+    }
   }
 
   update(delta: number): void {

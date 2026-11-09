@@ -1,26 +1,25 @@
 {
   "schemaVersion": 2,
-  "sessionId": "a9d83a9f-0c7c-498f-a043-e739d19c8465",
+  "sessionId": "b6cb210e-0ac6-4166-9383-4a514bdfdb78",
   "workspaceRoot": "C:\\Users\\Hp\\Desktop\\meta VR hackathon",
-  "pid": 18180,
+  "pid": 6864,
   "port": 5174,
   "localUrl": "http://localhost:5174/",
   "networkUrls": [
-    "http://10.147.174.207:5174/",
-    "http://172.25.48.1:5174/"
+    "http://192.168.1.105:5174/"
   ],
   "browser": {
     "status": "not_launched",
     "connected": false,
     "commandReady": false,
     "connectedClientCount": 0,
-    "lastTransitionAt": "2026-11-02T07:12:54.030Z",
+    "lastTransitionAt": "2026-11-09T10:54:35.212Z",
     "lastError": {
       "cause": "browser_not_launched",
       "message": "No managed browser was launched because the dev server was started with --no-open. Run \"iwsdk dev restart --open\" to enable browser, scene, and runtime tools.",
-      "at": "2026-11-02T07:12:54.030Z"
+      "at": "2026-11-09T10:54:35.212Z"
     }
   },
-  "registeredAt": "2026-11-02T06:44:13.021Z",
-  "updatedAt": "2026-11-02T07:12:54.105Z"
+  "registeredAt": "2026-11-09T10:54:35.265Z",
+  "updatedAt": "2026-11-09T10:54:35.265Z"
 }

@@ -9,6 +9,28 @@
     />
     <title>ApexPulse XR • Seated Spatial Motorsport Cockpit</title>
     <style>
+      :root {
+        --bg-void: #04070f;
+        --glass-bg: rgba(7, 12, 24, 0.78);
+        --glass-strong: rgba(5, 9, 20, 0.9);
+        --border-subtle: rgba(56, 189, 248, 0.24);
+        --border-bright: rgba(56, 189, 248, 0.62);
+        --cyan: #00f0ff;
+        --sky: #38bdf8;
+        --emerald: #10b981;
+        --amber: #f59e0b;
+        --gold: #facc15;
+        --crimson: #f43f5e;
+        --text-main: #f8fafc;
+        --text-dim: #94a3b8;
+        --font-sans: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+        --font-mono: 'JetBrains Mono', 'Cascadia Code', ui-monospace, SFMono-Regular, monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
       html,
       body {
         margin: 0;
@@ -16,13 +38,519 @@
         width: 100%;
         height: 100%;
         overflow: hidden;
-        background-color: #060911;
-        font-family: system-ui, -apple-system, sans-serif;
+        background: radial-gradient(circle at 50% 38%, #0b162c 0%, #04070f 72%);
+        color: var(--text-main);
+        font-family: var(--font-sans);
+        user-select: none;
       }
+
       #scene-container {
         width: 100vw;
         height: 100vh;
         position: relative;
+      }
+
+      /* Subtle Broadcast Vignette & Telemetry Corner Framing */
+      #scene-container::after {
+        content: '';
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        background: radial-gradient(
+          circle at 50% 45%,
+          transparent 56%,
+          rgba(2, 6, 16, 0.52) 100%
+        );
+        z-index: 2;
+      }
+
+      /* Broadcast Overlay Layer */
+      .apx-overlay {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 10;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 14px 18px 16px;
+        transition: opacity 0.25s ease;
+      }
+
+      .apx-overlay.is-hidden {
+        opacity: 0;
+        pointer-events: none !important;
+      }
+
+      .apx-overlay.is-hidden * {
+        pointer-events: none !important;
+      }
+
+      .apx-top-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 12px;
+      }
+
+      .apx-card {
+        pointer-events: auto;
+        background: var(--glass-bg);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        border: 1px solid var(--border-subtle);
+        border-radius: 14px;
+        box-shadow: 0 10px 32px rgba(0, 0, 0, 0.45),
+          inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      }
+
+      .apx-brand-cluster {
+        padding: 10px 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        min-width: 285px;
+      }
+
+      .apx-brand-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .apx-logo {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 800;
+        font-size: 13px;
+        letter-spacing: 0.08em;
+        color: var(--text-main);
+      }
+
+      .apx-pulse-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--cyan);
+        box-shadow: 0 0 10px var(--cyan);
+        animation: apxPulse 1.8s infinite ease-in-out;
+      }
+
+      @keyframes apxPulse {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.35); opacity: 0.55; }
+      }
+
+      .apx-badge {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        font-weight: 700;
+        padding: 3px 8px;
+        border-radius: 999px;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+
+      .apx-badge-cyan {
+        background: rgba(8, 51, 68, 0.85);
+        border: 1px solid rgba(0, 240, 255, 0.5);
+        color: var(--cyan);
+      }
+
+      .apx-badge-emerald {
+        background: rgba(6, 78, 59, 0.85);
+        border: 1px solid rgba(16, 185, 129, 0.65);
+        color: #6ee7b7;
+      }
+
+      .apx-badge-crimson {
+        background: rgba(136, 19, 55, 0.85);
+        border: 1px solid rgba(244, 63, 94, 0.75);
+        color: #fda4af;
+      }
+
+      .apx-badge-gold {
+        background: rgba(120, 53, 15, 0.8);
+        border: 1px solid rgba(250, 204, 21, 0.55);
+        color: #fef08a;
+      }
+
+      .apx-meta-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--text-dim);
+      }
+
+      .apx-right-cluster {
+        padding: 8px 10px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        max-width: 430px;
+      }
+
+      .apx-stage-pill,
+      .apx-util-btn {
+        cursor: pointer;
+        border: 1px solid rgba(71, 85, 105, 0.55);
+        background: rgba(15, 23, 42, 0.78);
+        color: #cbd5e1;
+        border-radius: 9px;
+        padding: 6px 10px;
+        font-size: 11px;
+        font-weight: 700;
+        font-family: var(--font-sans);
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.16s ease;
+      }
+
+      .apx-stage-pill:hover,
+      .apx-util-btn:hover {
+        border-color: var(--sky);
+        background: rgba(30, 41, 59, 0.92);
+        color: #ffffff;
+        transform: translateY(-1px);
+      }
+
+      .apx-stage-pill.is-active {
+        background: linear-gradient(135deg, rgba(8, 47, 73, 0.95), rgba(15, 23, 42, 0.95));
+        border-color: var(--cyan);
+        color: #ffffff;
+        box-shadow: 0 0 14px rgba(0, 240, 255, 0.22);
+      }
+
+      .apx-stars {
+        color: var(--gold);
+        font-size: 10px;
+        letter-spacing: 1px;
+      }
+
+      /* Dynamic Event Alert Banner */
+      .apx-alert-wrap {
+        position: fixed;
+        top: 62px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: max-content;
+        max-width: min(640px, 92vw);
+        pointer-events: none;
+        z-index: 15;
+        transition: all 0.25s ease;
+      }
+
+      .apx-alert-banner {
+        pointer-events: auto;
+        padding: 9px 14px;
+        border-radius: 12px;
+        background: rgba(15, 23, 42, 0.9);
+        border: 1px solid var(--border-bright);
+        backdrop-filter: blur(14px);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
+      }
+
+      .apx-alert-banner.is-danger {
+        background: linear-gradient(90deg, rgba(69, 10, 22, 0.92), rgba(15, 23, 42, 0.92));
+        border-color: rgba(244, 63, 94, 0.78);
+      }
+
+      .apx-alert-banner.is-success {
+        background: linear-gradient(90deg, rgba(6, 58, 42, 0.92), rgba(15, 23, 42, 0.92));
+        border-color: rgba(16, 185, 129, 0.78);
+      }
+
+      .apx-alert-text {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      .apx-alert-title {
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+      }
+
+      .apx-alert-sub {
+        font-size: 11px;
+        color: #cbd5e1;
+      }
+
+      .apx-alert-actions {
+        display: flex;
+        gap: 6px;
+        flex-shrink: 0;
+      }
+
+      /* Bottom Pit-Wall Strategist Dock */
+      .apx-bottom-dock {
+        align-self: center;
+        width: min(1120px, 100%);
+        padding: 11px 15px;
+        display: grid;
+        grid-template-columns: 1.15fr 1.35fr auto;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .apx-dock-section {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .apx-section-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        color: var(--text-dim);
+      }
+
+      .apx-mono-val {
+        font-family: var(--font-mono);
+        color: #e2e8f0;
+        font-weight: 700;
+      }
+
+      .apx-transport-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .apx-icon-btn {
+        cursor: pointer;
+        border: 1px solid rgba(56, 189, 248, 0.38);
+        background: rgba(15, 23, 42, 0.9);
+        color: var(--text-main);
+        border-radius: 8px;
+        padding: 5px 9px;
+        font-size: 11px;
+        font-weight: 700;
+        white-space: nowrap;
+        transition: all 0.15s ease;
+      }
+
+      .apx-icon-btn:hover {
+        background: rgba(14, 116, 144, 0.45);
+        border-color: var(--cyan);
+      }
+
+      input[type='range'].apx-slider {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 100%;
+        height: 6px;
+        border-radius: 999px;
+        background: rgba(30, 41, 59, 0.95);
+        border: 1px solid rgba(71, 85, 105, 0.55);
+        outline: none;
+        cursor: pointer;
+      }
+
+      input[type='range'].apx-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: var(--cyan);
+        border: 2px solid #ffffff;
+        box-shadow: 0 0 10px rgba(0, 240, 255, 0.75);
+        cursor: pointer;
+      }
+
+      .apx-dials-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 0.85fr;
+        gap: 12px;
+        align-items: center;
+      }
+
+      .apx-grip-meter {
+        width: 100%;
+        height: 8px;
+        background: rgba(15, 23, 42, 0.95);
+        border-radius: 999px;
+        border: 1px solid rgba(71, 85, 105, 0.6);
+        overflow: hidden;
+      }
+
+      .apx-grip-fill {
+        height: 100%;
+        width: 89%;
+        border-radius: 999px;
+        background: linear-gradient(90deg, #10b981, #38bdf8);
+        transition: width 0.18s ease, background 0.18s ease;
+      }
+
+      .apx-cta-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .apx-btn-primary,
+      .apx-btn-halo {
+        cursor: pointer;
+        border-radius: 10px;
+        padding: 9px 14px;
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.03em;
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        transition: all 0.16s ease;
+        white-space: nowrap;
+      }
+
+      .apx-btn-primary {
+        background: linear-gradient(135deg, #0284c7, #0369a1);
+        border: 1px solid #38bdf8;
+        color: #ffffff;
+        box-shadow: 0 4px 16px rgba(2, 132, 199, 0.35);
+      }
+
+      .apx-btn-primary:hover {
+        filter: brightness(1.12);
+        transform: translateY(-1px);
+      }
+
+      .apx-btn-halo {
+        background: linear-gradient(135deg, #059669, #0d9488);
+        border: 1px solid #34d399;
+        color: #ffffff;
+        box-shadow: 0 4px 18px rgba(16, 185, 129, 0.4);
+      }
+
+      .apx-btn-halo:hover {
+        filter: brightness(1.12);
+        transform: translateY(-1px);
+      }
+
+      .apx-kbd {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        padding: 1px 5px;
+        border-radius: 4px;
+        background: rgba(0, 0, 0, 0.35);
+        border: 1px solid rgba(255, 255, 255, 0.22);
+      }
+
+      /* 1:1 FIA Halo Driver Visor Telemetry Cluster */
+      .apx-visor-dock {
+        align-self: center;
+        width: min(820px, 100%);
+        padding: 12px 18px;
+        display: none;
+        flex-direction: column;
+        gap: 10px;
+        background: var(--glass-strong);
+        border-color: rgba(16, 185, 129, 0.55);
+      }
+
+      .apx-visor-dock.is-active {
+        display: flex;
+      }
+
+      .apx-rpm-strip {
+        display: grid;
+        grid-template-columns: repeat(15, 1fr);
+        gap: 4px;
+        height: 8px;
+      }
+
+      .apx-rpm-led {
+        border-radius: 3px;
+        background: rgba(30, 41, 59, 0.8);
+        transition: background 0.06s linear, box-shadow 0.06s linear;
+      }
+
+      .apx-visor-main {
+        display: grid;
+        grid-template-columns: auto 1fr 1fr auto;
+        align-items: center;
+        gap: 18px;
+      }
+
+      .apx-gear-box {
+        display: flex;
+        align-items: baseline;
+        gap: 12px;
+      }
+
+      .apx-gear-num {
+        font-family: var(--font-mono);
+        font-size: 40px;
+        font-weight: 900;
+        line-height: 1;
+        color: var(--cyan);
+        text-shadow: 0 0 18px rgba(0, 240, 255, 0.55);
+      }
+
+      .apx-speed-stack {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .apx-speed-num {
+        font-family: var(--font-mono);
+        font-size: 24px;
+        font-weight: 800;
+        line-height: 1.05;
+      }
+
+      .apx-speed-unit {
+        font-size: 10px;
+        font-weight: 700;
+        color: var(--text-dim);
+        letter-spacing: 0.08em;
+      }
+
+      .apx-visor-controls {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      /* Floating HUD Restore Pill when HUD is toggled off */
+      .apx-hud-restore {
+        position: fixed;
+        top: 14px;
+        right: 18px;
+        z-index: 20;
+        display: none;
+      }
+
+      .apx-hud-restore.is-visible {
+        display: inline-flex;
+      }
+
+      @media (max-width: 960px) {
+        .apx-bottom-dock {
+          grid-template-columns: 1fr;
+          gap: 10px;
+        }
+        .apx-dials-grid {
+          grid-template-columns: 1fr 1fr;
+        }
       }
     </style>
   </head>

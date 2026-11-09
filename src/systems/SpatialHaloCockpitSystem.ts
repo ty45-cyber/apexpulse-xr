@@ -54,6 +54,7 @@ export class SpatialHaloCockpitSystem extends createSystem({
 
   private audio!: SpatialDopplerAudio;
   private trackTableGroup!: Object3D;
+  private macroSceneObjects: Object3D[] = [];
   private anchorEntity: any = null;
   private onDuelCompleteCallback:
     | ((duelTelemetry: HaloCockpitDuelTelemetry) => void)
@@ -63,10 +64,12 @@ export class SpatialHaloCockpitSystem extends createSystem({
   private readonly yokeGroup = new Group();
   private readonly rivalCarGroup = new Group();
   private readonly speedCurbStrips: Mesh[] = [];
+  private readonly racingChevrons: Mesh[] = [];
   private readonly shiftLightLeds: Mesh[] = [];
   private leftPaddleMesh: Mesh | null = null;
   private rightPaddleMesh: Mesh | null = null;
   private rivalRainLightMesh: Mesh | null = null;
+  private ersBarMesh: Mesh | null = null;
 
   private readonly duelDurationSec = 7.5;
   private paddleLeftRecoil = 0;
@@ -83,10 +86,12 @@ export class SpatialHaloCockpitSystem extends createSystem({
     audio: SpatialDopplerAudio,
     trackTableGroup: Object3D,
     haloCockpitAnchorEntity: any,
-    onDuelComplete: (duelTelemetry: HaloCockpitDuelTelemetry) => void
+    onDuelComplete: (duelTelemetry: HaloCockpitDuelTelemetry) => void,
+    macroSceneObjects: Object3D[] = []
   ): void {
     this.audio = audio;
     this.trackTableGroup = trackTableGroup;
+    this.macroSceneObjects = [trackTableGroup, ...macroSceneObjects];
     this.anchorEntity = haloCockpitAnchorEntity;
     this.onDuelCompleteCallback = onDuelComplete;
 
@@ -99,142 +104,275 @@ export class SpatialHaloCockpitSystem extends createSystem({
 
   private buildFirstPersonHaloGeometry(): void {
     const carbonMat = new MeshStandardMaterial({
-      color: 0x111827,
-      roughness: 0.28,
-      metalness: 0.85,
+      color: 0x0f172a,
+      roughness: 0.26,
+      metalness: 0.88,
     });
 
-    // 1. FIA Titanium Halo Central Pillar & Curved Upper Protection Arch (scaled cleanly inside 0.56m seated envelope)
-    const pillarGeo = new CylinderGeometry(0.008, 0.011, 0.22, 16);
-    const pillarMesh = new Mesh(pillarGeo, carbonMat);
-    pillarMesh.position.set(0, 0.05, -0.05);
+    const titaniumMat = new MeshStandardMaterial({
+      color: 0x1e293b,
+      roughness: 0.22,
+      metalness: 0.92,
+    });
+
+    // 1. FIA Titanium Halo Central Pillar, Cockpit Coaming & Curved Protection Arch
+    const pillarGeo = new CylinderGeometry(0.0085, 0.012, 0.23, 18);
+    const pillarMesh = new Mesh(pillarGeo, titaniumMat);
+    pillarMesh.position.set(0, 0.052, -0.052);
     pillarMesh.rotation.x = 0.22;
     this.haloRoot.add(pillarMesh);
 
-    const archGeo = new TorusGeometry(0.22, 0.011, 14, 42, Math.PI);
-    const archMesh = new Mesh(archGeo, carbonMat);
-    archMesh.position.set(0, 0.145, 0.04);
+    const archGeo = new TorusGeometry(0.228, 0.012, 16, 48, Math.PI);
+    const archMesh = new Mesh(archGeo, titaniumMat);
+    archMesh.position.set(0, 0.148, 0.042);
     archMesh.rotation.x = Math.PI * 0.44;
     this.haloRoot.add(archMesh);
 
-    // Subtle Cyan HUD Framing Trim along Halo Arch
-    const haloAccentGeo = new TorusGeometry(0.214, 0.0025, 10, 42, Math.PI);
-    const haloAccentMesh = new Mesh(
-      haloAccentGeo,
-      new MeshStandardMaterial({
-        color: 0x00f0ff,
-        emissive: 0x00f0ff,
-        emissiveIntensity: 0.85,
-      })
-    );
+    // Dual Cyan Telemetry Accent Strips along Halo Arch & Nose Coaming
+    const haloAccentGeo = new TorusGeometry(0.221, 0.0028, 10, 48, Math.PI);
+    const cyanGlowMat = new MeshStandardMaterial({
+      color: 0x00f0ff,
+      emissive: 0x00f0ff,
+      emissiveIntensity: 0.95,
+    });
+    const haloAccentMesh = new Mesh(haloAccentGeo, cyanGlowMat);
     haloAccentMesh.position.copy(archMesh.position);
     haloAccentMesh.rotation.copy(archMesh.rotation);
     this.haloRoot.add(haloAccentMesh);
 
-    // 2. F1 Carbon-Fiber Air-Yoke Steering Wheel + 10 Shift-Light LEDs + Pinch Paddles
-    this.yokeGroup.position.set(0, -0.065, 0.075);
+    // Sculpted Nose Cone & Cockpit Tub Sills Framing the Driver's Field of View
+    const noseCone = new Mesh(
+      new BoxGeometry(0.088, 0.016, 0.19),
+      new MeshStandardMaterial({
+        color: 0x083344,
+        emissive: 0x0e7490,
+        emissiveIntensity: 0.35,
+        metalness: 0.78,
+        roughness: 0.24,
+      })
+    );
+    noseCone.position.set(0, -0.068, -0.085);
+    noseCone.rotation.x = 0.08;
+    this.haloRoot.add(noseCone);
+
+    // 2. Asphalt Circuit Surface + Streaming Clean-Air Racing Line Chevrons
+    const asphaltDeck = new Mesh(
+      new BoxGeometry(0.32, 0.004, 0.42),
+      new MeshStandardMaterial({
+        color: 0x090d16,
+        roughness: 0.85,
+        metalness: 0.15,
+      })
+    );
+    asphaltDeck.position.set(0, -0.09, -0.07);
+    this.haloRoot.add(asphaltDeck);
+
+    const chevronGeo = new BoxGeometry(0.022, 0.002, 0.032);
+    const chevronMat = new MeshStandardMaterial({
+      color: 0x10b981,
+      emissive: 0x059669,
+      emissiveIntensity: 0.75,
+    });
+    for (let k = 0; k < 6; k++) {
+      const chev = new Mesh(chevronGeo, chevronMat);
+      chev.position.set(-0.042, -0.086, 0.09 - k * 0.056);
+      this.haloRoot.add(chev);
+      this.racingChevrons.push(chev);
+    }
+
+    // 3. F1 Carbon-Fiber Air-Yoke Steering Wheel + OLED Telemetry Bezel + Rotary Encoders
+    this.yokeGroup.position.set(0, -0.062, 0.078);
     this.haloRoot.add(this.yokeGroup);
 
-    const yokeHub = new Mesh(new BoxGeometry(0.14, 0.068, 0.016), carbonMat);
+    const yokeHub = new Mesh(new BoxGeometry(0.148, 0.072, 0.016), carbonMat);
     this.yokeGroup.add(yokeHub);
 
-    const gripGeo = new CylinderGeometry(0.01, 0.01, 0.082, 14);
+    // Central OLED Telemetry Display Screen & Live ERS Bar on Wheel Face
+    const oledScreen = new Mesh(
+      new BoxGeometry(0.086, 0.036, 0.004),
+      new MeshStandardMaterial({
+        color: 0x020617,
+        emissive: 0x082f49,
+        emissiveIntensity: 0.65,
+        roughness: 0.15,
+      })
+    );
+    oledScreen.position.set(0, -0.002, 0.009);
+    this.yokeGroup.add(oledScreen);
+
+    const ersBarGeo = new BoxGeometry(0.074, 0.006, 0.003);
+    this.ersBarMesh = new Mesh(
+      ersBarGeo,
+      new MeshStandardMaterial({
+        color: 0x10b981,
+        emissive: 0x10b981,
+        emissiveIntensity: 1.0,
+      })
+    );
+    this.ersBarMesh.position.set(0, -0.013, 0.011);
+    this.yokeGroup.add(this.ersBarMesh);
+
+    // Rotary Thumb Encoders (Cyan Differential + Amber Brake Migration + Crimson Radio)
+    const dialGeo = new CylinderGeometry(0.007, 0.007, 0.006, 14);
+    dialGeo.rotateX(Math.PI * 0.5);
+    const dialSpecs = [
+      { x: -0.054, y: 0.012, color: 0x00f0ff },
+      { x: 0.054, y: 0.012, color: 0xf59e0b },
+      { x: 0.0, y: -0.026, color: 0xa855f7 },
+    ];
+    for (const d of dialSpecs) {
+      const dial = new Mesh(
+        dialGeo,
+        new MeshStandardMaterial({
+          color: d.color,
+          emissive: d.color,
+          emissiveIntensity: 0.75,
+        })
+      );
+      dial.position.set(d.x, d.y, 0.01);
+      this.yokeGroup.add(dial);
+    }
+
+    const gripGeo = new CylinderGeometry(0.011, 0.011, 0.086, 16);
     const gripMat = new MeshStandardMaterial({
       color: 0x1e293b,
-      roughness: 0.55,
-      metalness: 0.35,
+      roughness: 0.5,
+      metalness: 0.4,
     });
     const leftGrip = new Mesh(gripGeo, gripMat);
-    leftGrip.position.set(-0.074, -0.004, 0.004);
+    leftGrip.position.set(-0.078, -0.004, 0.004);
     this.yokeGroup.add(leftGrip);
 
     const rightGrip = new Mesh(gripGeo, gripMat);
-    rightGrip.position.set(0.074, -0.004, 0.004);
+    rightGrip.position.set(0.078, -0.004, 0.004);
     this.yokeGroup.add(rightGrip);
 
-    const paddleGeo = new BoxGeometry(0.026, 0.044, 0.006);
+    const paddleGeo = new BoxGeometry(0.028, 0.046, 0.006);
     const paddleMat = new MeshStandardMaterial({
       color: 0x38bdf8,
       emissive: 0x0284c7,
-      emissiveIntensity: 0.65,
-      metalness: 0.8,
+      emissiveIntensity: 0.75,
+      metalness: 0.85,
       roughness: 0.2,
     });
     this.leftPaddleMesh = new Mesh(paddleGeo, paddleMat);
-    this.leftPaddleMesh.position.set(-0.056, 0.008, -0.014);
+    this.leftPaddleMesh.position.set(-0.058, 0.008, -0.014);
     this.yokeGroup.add(this.leftPaddleMesh);
 
     this.rightPaddleMesh = new Mesh(paddleGeo, paddleMat.clone());
-    this.rightPaddleMesh.position.set(0.056, 0.008, -0.014);
+    this.rightPaddleMesh.position.set(0.058, 0.008, -0.014);
     this.yokeGroup.add(this.rightPaddleMesh);
 
-    const ledGeo = new SphereGeometry(0.0032, 10, 10);
+    const ledGeo = new SphereGeometry(0.0034, 10, 10);
     for (let i = 0; i < 10; i++) {
-      const hex = i < 4 ? 0x10b981 : i < 7 ? 0xf43f5e : 0x38bdf8;
+      const hex = i < 4 ? 0x10b981 : i < 7 ? 0xf59e0b : 0xf43f5e;
       const ledMat = new MeshStandardMaterial({
         color: hex,
         emissive: hex,
-        emissiveIntensity: 0.9,
+        emissiveIntensity: 1.0,
       });
       const led = new Mesh(ledGeo, ledMat);
-      led.position.set(-0.045 + i * 0.01, 0.026, 0.01);
+      led.position.set(-0.045 + i * 0.01, 0.027, 0.011);
       this.yokeGroup.add(led);
       this.shiftLightLeds.push(led);
     }
 
-    // 3. Rival Car B Ahead in 1:1 Perspective (with blinking FIA Rain Light)
+    // 4. Multi-Part Rival Car B Ahead in 1:1 Perspective (Monocoque, Wings, Slick Tires & Blinking Rain Light)
+    const rivalPaintMat = new MeshStandardMaterial({
+      color: 0xff2a85,
+      emissive: 0xd91b6b,
+      emissiveIntensity: 0.6,
+      metalness: 0.82,
+      roughness: 0.22,
+    });
     const rivalBody = new Mesh(
-      new BoxGeometry(0.068, 0.024, 0.12),
-      new MeshStandardMaterial({
-        color: 0xff2a85,
-        emissive: 0xd91b6b,
-        emissiveIntensity: 0.55,
-        metalness: 0.8,
-        roughness: 0.25,
-      })
+      new BoxGeometry(0.056, 0.02, 0.125),
+      rivalPaintMat
     );
     this.rivalCarGroup.add(rivalBody);
 
+    const rivalSidepods = new Mesh(
+      new BoxGeometry(0.078, 0.014, 0.068),
+      rivalPaintMat
+    );
+    rivalSidepods.position.set(0, -0.002, 0.006);
+    this.rivalCarGroup.add(rivalSidepods);
+
     const rearWing = new Mesh(
-      new BoxGeometry(0.078, 0.018, 0.012),
+      new BoxGeometry(0.082, 0.018, 0.014),
       carbonMat
     );
-    rearWing.position.set(0, 0.018, 0.052);
+    rearWing.position.set(0, 0.018, 0.056);
     this.rivalCarGroup.add(rearWing);
+
+    const frontWing = new Mesh(
+      new BoxGeometry(0.086, 0.006, 0.018),
+      carbonMat
+    );
+    frontWing.position.set(0, -0.008, -0.062);
+    this.rivalCarGroup.add(frontWing);
+
+    const wheelGeo = new CylinderGeometry(0.013, 0.013, 0.014, 14);
+    wheelGeo.rotateZ(Math.PI * 0.5);
+    const wheelMat = new MeshStandardMaterial({
+      color: 0x0f172a,
+      roughness: 0.65,
+    });
+    const wheelCoords: [number, number][] = [
+      [-0.042, -0.042],
+      [0.042, -0.042],
+      [-0.044, 0.044],
+      [0.044, 0.044],
+    ];
+    for (const [wx, wz] of wheelCoords) {
+      const w = new Mesh(wheelGeo, wheelMat);
+      w.position.set(wx, -0.004, wz);
+      this.rivalCarGroup.add(w);
+    }
 
     this.rivalRainLightMesh = new Mesh(
       new SphereGeometry(0.0055, 12, 12),
       new MeshStandardMaterial({
         color: 0xf43f5e,
         emissive: 0xf43f5e,
-        emissiveIntensity: 1.2,
+        emissiveIntensity: 1.4,
       })
     );
-    this.rivalRainLightMesh.position.set(0, 0.004, 0.062);
+    this.rivalRainLightMesh.position.set(0, 0.004, 0.065);
     this.rivalCarGroup.add(this.rivalRainLightMesh);
 
-    this.rivalCarGroup.position.set(0, -0.03, -0.14);
+    this.rivalCarGroup.position.set(0, -0.032, -0.15);
     this.haloRoot.add(this.rivalCarGroup);
 
-    // 4. Rushing Apex Kerb Strips Framing the Braking Chute
-    const curbGeo = new BoxGeometry(0.014, 0.003, 0.036);
-    for (let c = 0; c < 12; c++) {
+    // 5. Rushing Red-and-White FIA Apex Kerb Strips Framing the Braking Chute
+    const curbGeo = new BoxGeometry(0.016, 0.0035, 0.038);
+    for (let c = 0; c < 14; c++) {
       const isLeft = c % 2 === 0;
       const isRed = Math.floor(c / 2) % 2 === 0;
       const curbMat = new MeshStandardMaterial({
         color: isRed ? 0xf43f5e : 0xf8fafc,
-        emissive: isRed ? 0x9f1239 : 0x334155,
-        emissiveIntensity: 0.45,
+        emissive: isRed ? 0x9f1239 : 0x475569,
+        emissiveIntensity: 0.5,
       });
       const curb = new Mesh(curbGeo, curbMat);
       const laneIdx = Math.floor(c / 2);
       curb.position.set(
-        isLeft ? -0.145 : 0.145,
-        -0.085,
-        0.08 - laneIdx * 0.048
+        isLeft ? -0.148 : 0.148,
+        -0.086,
+        0.09 - laneIdx * 0.046
       );
       this.haloRoot.add(curb);
       this.speedCurbStrips.push(curb);
+    }
+  }
+
+  public setMacroSceneObjects(objects: Object3D[]): void {
+    this.macroSceneObjects = [this.trackTableGroup, ...objects];
+  }
+
+  private setMacroSceneVisibility(visible: boolean): void {
+    for (const obj of this.macroSceneObjects) {
+      if (obj) obj.visible = visible;
     }
   }
 
@@ -242,9 +380,7 @@ export class SpatialHaloCockpitSystem extends createSystem({
     if (this.mode === 'FIRST_PERSON_HALO_COCKPIT') return;
     this.mode = 'FIRST_PERSON_HALO_COCKPIT';
 
-    if (this.trackTableGroup) {
-      this.trackTableGroup.visible = false;
-    }
+    this.setMacroSceneVisibility(false);
     this.haloRoot.visible = true;
 
     this.telemetry.duelElapsedSec = 0;
@@ -268,9 +404,7 @@ export class SpatialHaloCockpitSystem extends createSystem({
     this.mode = 'MACRO_PIT_WALL';
 
     this.haloRoot.visible = false;
-    if (this.trackTableGroup) {
-      this.trackTableGroup.visible = true;
-    }
+    this.setMacroSceneVisibility(true);
     this.audio?.playInteractionChime(640);
   }
 
@@ -326,7 +460,10 @@ export class SpatialHaloCockpitSystem extends createSystem({
       this.world.player.gripSpaces.left.getWorldPosition(this.leftHandPos);
       this.world.player.gripSpaces.right.getWorldPosition(this.rightHandPos);
       const dy = this.leftHandPos.y - this.rightHandPos.y;
-      const dx = Math.max(0.08, Math.abs(this.rightHandPos.x - this.leftHandPos.x));
+      const dx = Math.max(
+        0.08,
+        Math.abs(this.rightHandPos.x - this.leftHandPos.x)
+      );
       const handSteerDeg = MathUtils.radToDeg(Math.atan2(dy, dx));
       this.setAirYokeSteerAngleDeg(handSteerDeg);
     }
@@ -343,6 +480,10 @@ export class SpatialHaloCockpitSystem extends createSystem({
     const apexDip = Math.exp(-Math.pow((progress - 0.46) / 0.2, 2));
     this.telemetry.speedKmh = Math.round(298 - apexDip * 194 + progress * 18);
     this.telemetry.ersPct = Math.max(12, Math.round(92 - progress * 58));
+
+    if (this.ersBarMesh) {
+      this.ersBarMesh.scale.x = Math.max(0.08, this.telemetry.ersPct / 100);
+    }
 
     const targetRpm = 8400 + ((this.telemetry.speedKmh % 42) / 42) * 3800;
     this.telemetry.rpm = Math.round(
@@ -384,15 +525,21 @@ export class SpatialHaloCockpitSystem extends createSystem({
 
     if (this.rivalRainLightMesh) {
       const mat = this.rivalRainLightMesh.material as MeshStandardMaterial;
-      mat.emissiveIntensity = Math.sin(this.flashClock * 2.2) > 0 ? 1.4 : 0.2;
+      mat.emissiveIntensity = Math.sin(this.flashClock * 2.2) > 0 ? 1.5 : 0.2;
     }
 
-    // Stream Kerb Strips Past Cockpit
-    const streamSpeed = (this.telemetry.speedKmh / 300) * 0.65;
+    // Stream Kerb Strips & Clean-Air Racing Chevrons Past Cockpit
+    const streamSpeed = (this.telemetry.speedKmh / 300) * 0.68;
     for (const curb of this.speedCurbStrips) {
       curb.position.z += dt * streamSpeed;
       if (curb.position.z > 0.14) {
-        curb.position.z -= 0.288;
+        curb.position.z -= 0.322;
+      }
+    }
+    for (const chev of this.racingChevrons) {
+      chev.position.z += dt * streamSpeed;
+      if (chev.position.z > 0.14) {
+        chev.position.z -= 0.336;
       }
     }
 

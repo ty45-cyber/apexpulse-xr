@@ -16,6 +16,7 @@ pnpm-debug.log*
 
 # Tool caches
 .vite/
+.iwsdk/
 *.tsbuildinfo
 
 # Editor and OS files
