@@ -52,8 +52,8 @@
     "emulator": {
       "device": "metaQuest3",
       "environment": "living_room",
-      "activation": "always",
-      "injectOnBuild": true
+      "activation": { "source": "^apexpulse-native-bridge$" },
+      "injectOnBuild": false
     }
   }
 }

@@ -14,6 +14,7 @@ import {
   Vector3,
 } from '@iwsdk/core';
 import { SpatialDopplerAudio } from '../audio/SpatialDopplerAudio';
+import { UniversalDeviceManager } from '../xr/UniversalDeviceManager';
 import {
   StrategistChallengeState,
   TelemetryCarNode,
@@ -380,6 +381,9 @@ export class SpatialHaloCockpitSystem extends createSystem({
     if (this.mode === 'FIRST_PERSON_HALO_COCKPIT') return;
     this.mode = 'FIRST_PERSON_HALO_COCKPIT';
 
+    // Boost frame rate to 120Hz for high-speed cockpit duel (Project Aero PRD dynamic scaling)
+    UniversalDeviceManager.getInstance().setDynamicBoostMode(true);
+
     this.setMacroSceneVisibility(false);
     this.haloRoot.visible = true;
 
@@ -402,6 +406,9 @@ export class SpatialHaloCockpitSystem extends createSystem({
   public exitToMacroPitWall(): void {
     if (this.mode === 'MACRO_PIT_WALL') return;
     this.mode = 'MACRO_PIT_WALL';
+
+    // Restore 90Hz baseline to protect external puck thermal envelope
+    UniversalDeviceManager.getInstance().setDynamicBoostMode(false);
 
     this.haloRoot.visible = false;
     this.setMacroSceneVisibility(true);

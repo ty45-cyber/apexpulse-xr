@@ -41,6 +41,8 @@ import { TelemetryScrubSystem } from './systems/TelemetryScrubSystem';
 import { TimeLoopAndEnvironmentSystem } from './systems/TimeLoopAndEnvironmentSystem';
 import { WinnerPolishSystem } from './systems/WinnerPolishSystem';
 import { CircuitTelemetryEngine } from './telemetry/CircuitTelemetryEngine';
+import { UniversalDeviceManager } from './xr/UniversalDeviceManager';
+import { resolveDeviceAlias } from './xr/DeviceProfiles';
 
 async function bootstrapApexPulseXR() {
   const container = document.getElementById('scene-container') as HTMLDivElement;
@@ -82,6 +84,12 @@ async function bootstrapApexPulseXR() {
   const timeLoopSystem = world.getSystem(TimeLoopAndEnvironmentSystem)!;
   const haloCockpitSystem = world.getSystem(SpatialHaloCockpitSystem)!;
   const winnerPolishSystem = world.getSystem(WinnerPolishSystem)!;
+
+  // ============================================================================
+  // 2B. BIND UNIVERSAL DEVICE MANAGER (META VR GLASSES / MULTI-HEADSET COMPAT)
+  // ============================================================================
+  const deviceManager = UniversalDeviceManager.getInstance();
+  deviceManager.bindWorld(world, cockpitSystem);
 
   // ============================================================================
   // 3. CREATE GLOBAL SINGLETON SESSION & CHALLENGE STATE ENTITY
@@ -983,6 +991,14 @@ async function bootstrapApexPulseXR() {
   const brakeParam = params.get('brake');
   const apexParam = params.get('apex');
   const modeParam = params.get('mode');
+  const deviceParam = params.get('device') || params.get('headset');
+
+  if (deviceParam) {
+    const resolved = resolveDeviceAlias(deviceParam);
+    if (resolved) {
+      deviceManager.setProfile(resolved);
+    }
+  }
 
   if (
     inviteParam !== null ||

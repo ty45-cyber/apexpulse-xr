@@ -23,6 +23,8 @@ export class SeatedCockpitSystem extends createSystem(
   private readonly cockpitOrigin = new Vector3(0, 1.2, 0);
   private cockpitYawRad = 0;
   private isInitialized = false;
+  private layoutAzimuthScale = 1.0;
+  private layoutElevationOffsetDeg = 0.0;
 
   private readonly idealWorldPos = new Vector3();
   private readonly currentWorldPos = new Vector3();
@@ -40,6 +42,21 @@ export class SeatedCockpitSystem extends createSystem(
     this.sampleHeadPose();
     this.cockpitOrigin.copy(this.headPos);
     this.cockpitYawRad = Math.atan2(-this.forwardVec.x, -this.forwardVec.z);
+  }
+
+  /**
+   * Adapts the 5 seated cockpit interactive zones to specific headset optical FoVs.
+   * On Meta VR Glasses (Project Aero, narrower FoV with downward bias), azimuth is scaled
+   * by 0.85 and elevation shifted by -4° to ensure every zone remains in the central sweet spot.
+   */
+  public setLayoutProfile(azimuthScale: number, elevationOffsetDeg: number): void {
+    this.layoutAzimuthScale = azimuthScale;
+    this.layoutElevationOffsetDeg = elevationOffsetDeg;
+    for (const entity of this.queries.envelopeNodes.entities) {
+      if (entity.object3D) {
+        this.snapEntityToIdealSlot(entity.object3D, entity);
+      }
+    }
   }
 
   private sampleHeadPose(): void {
@@ -65,12 +82,14 @@ export class SeatedCockpitSystem extends createSystem(
       entity.getValue(SeatedEnvelopeNode, 'minRadius') ?? 0.28,
       entity.getValue(SeatedEnvelopeNode, 'maxRadius') ?? 0.58
     );
-    const azRad = MathUtils.degToRad(
-      entity.getValue(SeatedEnvelopeNode, 'azimuthDeg') ?? 0
-    );
-    const elRad = MathUtils.degToRad(
-      entity.getValue(SeatedEnvelopeNode, 'elevationDeg') ?? -18
-    );
+    const rawAz = entity.getValue(SeatedEnvelopeNode, 'azimuthDeg') ?? 0;
+    const rawEl = entity.getValue(SeatedEnvelopeNode, 'elevationDeg') ?? -18;
+
+    const scaledAz = rawAz * this.layoutAzimuthScale;
+    const adjustedEl = rawEl + this.layoutElevationOffsetDeg;
+
+    const azRad = MathUtils.degToRad(scaledAz);
+    const elRad = MathUtils.degToRad(adjustedEl);
 
     const totalYaw = this.cockpitYawRad - azRad;
     const horizDist = r * Math.cos(elRad);

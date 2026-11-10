@@ -9,7 +9,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@iwer/devui": "^2.8.0",
+    "@iwer/sem": "^2.8.0",
     "@iwsdk/core": "^0.5.3",
+    "iwer": "^2.8.0",
+    "qrcode": "^1.5.4",
     "three": "npm:super-three@0.181.0"
   },
   "overrides": {
@@ -17,6 +21,7 @@
   },
   "devDependencies": {
     "@iwsdk/vite-plugin-dev": "^0.5.3",
+    "@types/qrcode": "^1.5.6",
     "typescript": "^5.6.3",
     "vite": "^7.0.0"
   }

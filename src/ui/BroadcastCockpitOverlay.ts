@@ -11,6 +11,8 @@ import {
   CircuitTelemetryEngine,
 } from '../telemetry/CircuitTelemetryEngine';
 import { SpatialDopplerAudio } from '../audio/SpatialDopplerAudio';
+import { UniversalDeviceManager } from '../xr/UniversalDeviceManager';
+import { DEVICE_PROFILES, DeviceProfileId } from '../xr/DeviceProfiles';
 
 export interface BroadcastOverlayDeps {
   world: any;
@@ -43,6 +45,17 @@ export class BroadcastCockpitOverlay {
   private elLapClock!: HTMLElement;
   private elPhaseBadge!: HTMLElement;
   private elCareerBadge!: HTMLElement;
+  private elFpsBadge!: HTMLElement;
+  private elPuckBadge!: HTMLElement;
+  private elDeviceBtnLabel!: HTMLElement;
+  private elDeviceModal!: HTMLElement;
+  private elDeviceChipsContainer!: HTMLElement;
+  private elActiveProfileName!: HTMLElement;
+  private elSpecDisplay!: HTMLElement;
+  private elSpecPuck!: HTMLElement;
+  private elSpecRefresh!: HTMLElement;
+  private elSpecTemp!: HTMLElement;
+  private elQrImage!: HTMLImageElement;
   private stageBtns: HTMLButtonElement[] = [];
   private stageStarSpans: HTMLElement[] = [];
 
@@ -143,6 +156,10 @@ export class BroadcastCockpitOverlay {
           <div class="apx-meta-row">
             <span class="apx-badge apx-badge-gold" id="apx-career-badge">DAY 1 STREAK • ELO 1200</span>
           </div>
+          <div class="apx-meta-row apx-puck-row">
+            <span class="apx-badge apx-badge-cyan" id="apx-fps-badge">90 FPS (DYNAMIC)</span>
+            <span class="apx-badge apx-badge-emerald" id="apx-puck-badge">PUCK 38°C • XR2 GEN 3</span>
+          </div>
         </div>
 
         <div class="apx-card apx-right-cluster">
@@ -157,6 +174,15 @@ export class BroadcastCockpitOverlay {
           <button class="apx-stage-pill" data-stage="2" title="Stage 3: Sector 3 Banked Sweeper">
             <span>S3 Sweeper</span>
             <span class="apx-stars" id="apx-s2-stars">☆☆☆</span>
+          </button>
+          <button class="apx-util-btn apx-btn-device" id="apx-btn-device" title="Active Headset Profile & Project Aero Specs">
+            👓 <span id="apx-device-label">VR Glasses</span>
+          </button>
+          <button class="apx-util-btn apx-btn-qr" id="apx-btn-qr" title="Scan QR Code to Connect ANY VR Headset">
+            📱 Connect Headset
+          </button>
+          <button class="apx-btn-enter-xr" id="apx-btn-enter-xr" title="Enter Immersive WebXR">
+            Enter VR
           </button>
           <button class="apx-util-btn" id="apx-btn-scale" title="Expand or compact 3D tabletop circuit scale">2x Scale</button>
           <button class="apx-util-btn" id="apx-btn-streak" title="Simulate 14-Day Pro Strategist Career">14D Pro</button>
@@ -282,6 +308,80 @@ export class BroadcastCockpitOverlay {
           <button class="apx-icon-btn" id="apx-visor-upshift">Upshift <span class="apx-kbd">E</span></button>
         </div>
       </div>
+
+      <!-- UNIVERSAL HEADSET PAIRING & PROJECT AERO MODAL -->
+      <div class="apx-modal-backdrop" id="apx-device-modal" style="display: none;">
+        <div class="apx-device-modal-card">
+          <div class="apx-modal-head">
+            <div class="apx-modal-title">
+              <span class="apx-pulse-dot"></span>
+              <span>Universal WebXR &amp; Meta VR Glasses (Project Aero)</span>
+            </div>
+            <button class="apx-icon-btn apx-modal-close" id="apx-modal-close">✕ Close</button>
+          </div>
+
+          <div class="apx-modal-body">
+            <div class="apx-modal-section">
+              <div class="apx-section-head">
+                <span>ACTIVE VR / MR DEVICE PROFILE</span>
+                <span class="apx-mono-val" id="apx-active-profile-name">Meta VR Glasses (Project Aero)</span>
+              </div>
+              <div class="apx-device-chips-grid" id="apx-device-chips">
+                <!-- Populated dynamically via device profiles -->
+              </div>
+            </div>
+
+            <!-- Project Aero PRD Spotlight -->
+            <div class="apx-modal-section apx-aero-specs-card">
+              <div class="apx-section-head">
+                <span>PROJECT AERO HARDWARE ARCHITECTURE (PRD COMPLIANT)</span>
+                <span class="apx-badge apx-badge-cyan">SPRING 2027 • $1,299.99</span>
+              </div>
+              <div class="apx-specs-grid">
+                <div class="apx-spec-item">
+                  <span class="apx-spec-label">Display Subsystem</span>
+                  <span class="apx-spec-val" id="apx-spec-display">5K Micro-OLED (2412x2288)</span>
+                </div>
+                <div class="apx-spec-item">
+                  <span class="apx-spec-label">Compute Puck</span>
+                  <span class="apx-spec-val" id="apx-spec-puck">Qualcomm XR2 Gen 3 • 12GB LPDDR5X</span>
+                </div>
+                <div class="apx-spec-item">
+                  <span class="apx-spec-label">Dynamic Scaling</span>
+                  <span class="apx-spec-val" id="apx-spec-refresh">90Hz Baseline ➔ 120Hz Halo Boost</span>
+                </div>
+                <div class="apx-spec-item">
+                  <span class="apx-spec-label">Form Factor & Ergonomics</span>
+                  <span class="apx-spec-val">≤100g • Open-Sided Frame</span>
+                </div>
+                <div class="apx-spec-item">
+                  <span class="apx-spec-label">Natural Input Mode</span>
+                  <span class="apx-spec-val">Hands + Eye Gaze (Zero Controllers)</span>
+                </div>
+                <div class="apx-spec-item">
+                  <span class="apx-spec-label">Puck Thermals</span>
+                  <span class="apx-spec-val" id="apx-spec-temp">38.2°C (Vapor Chamber Passive Cool)</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Instant Headset Pairing QR Code -->
+            <div class="apx-modal-section apx-qr-pairing-box">
+              <div class="apx-qr-preview-col">
+                <img id="apx-qr-image" class="apx-qr-image" alt="Universal VR Pairing QR Code" />
+              </div>
+              <div class="apx-qr-info-col">
+                <h4>Instant Multi-Device Connection</h4>
+                <p>Put on <strong>Meta VR Glasses</strong>, <strong>Meta Quest 3/Pro</strong>, <strong>Apple Vision Pro</strong>, <strong>PICO</strong>, or any WebXR headset and point your browser or camera at this QR code. The session launches instantly with your active race stage and brake tuning.</p>
+                <div class="apx-qr-actions">
+                  <button class="apx-btn-primary" id="apx-btn-copy-deep-link">Copy Headset URL</button>
+                  <button class="apx-btn-enter-xr" id="apx-btn-modal-enter-xr">Enter VR / AR</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     `;
 
     // Query elements
@@ -289,6 +389,18 @@ export class BroadcastCockpitOverlay {
     this.elLapClock = this.root.querySelector('#apx-lap-clock')!;
     this.elPhaseBadge = this.root.querySelector('#apx-phase-badge')!;
     this.elCareerBadge = this.root.querySelector('#apx-career-badge')!;
+    this.elFpsBadge = this.root.querySelector('#apx-fps-badge')!;
+    this.elPuckBadge = this.root.querySelector('#apx-puck-badge')!;
+    this.elDeviceBtnLabel = this.root.querySelector('#apx-device-label')!;
+
+    this.elDeviceModal = this.root.querySelector('#apx-device-modal')!;
+    this.elDeviceChipsContainer = this.root.querySelector('#apx-device-chips')!;
+    this.elActiveProfileName = this.root.querySelector('#apx-active-profile-name')!;
+    this.elSpecDisplay = this.root.querySelector('#apx-spec-display')!;
+    this.elSpecPuck = this.root.querySelector('#apx-spec-puck')!;
+    this.elSpecRefresh = this.root.querySelector('#apx-spec-refresh')!;
+    this.elSpecTemp = this.root.querySelector('#apx-spec-temp')!;
+    this.elQrImage = this.root.querySelector('#apx-qr-image') as HTMLImageElement;
 
     this.stageBtns = Array.from(this.root.querySelectorAll('.apx-stage-pill'));
     this.stageStarSpans = [
@@ -563,6 +675,109 @@ export class BroadcastCockpitOverlay {
         this.toggleHudVisibility();
       }
     });
+
+    // Device modal & multi-headset pairing
+    this.root.querySelector('#apx-btn-device')?.addEventListener('click', () => {
+      unlock();
+      this.openDeviceModal();
+    });
+    this.root.querySelector('#apx-btn-qr')?.addEventListener('click', () => {
+      unlock();
+      this.openDeviceModal();
+    });
+    this.root.querySelector('#apx-modal-close')?.addEventListener('click', () => {
+      this.closeDeviceModal();
+    });
+    this.elDeviceModal.addEventListener('click', (e) => {
+      if (e.target === this.elDeviceModal) {
+        this.closeDeviceModal();
+      }
+    });
+
+    // Enter VR buttons
+    const enterXRHandler = () => {
+      unlock();
+      this.closeDeviceModal();
+      UniversalDeviceManager.getInstance().requestEnterXR().catch((err) => {
+        this.showToast('WebXR Launch', String(err.message || err), 'danger');
+      });
+    };
+    this.root.querySelector('#apx-btn-enter-xr')?.addEventListener('click', enterXRHandler);
+    this.root.querySelector('#apx-btn-modal-enter-xr')?.addEventListener('click', enterXRHandler);
+
+    // Copy Deep Link from modal
+    this.root.querySelector('#apx-btn-copy-deep-link')?.addEventListener('click', () => {
+      unlock();
+      const vm = this.deps.challengeSystem.getScoreboardViewModel();
+      const url = UniversalDeviceManager.getInstance().generateInviteUrl({
+        stage: vm.currentStage.stageIndex,
+        brake: Number(vm.dialedBrakeMeters.toFixed(1)),
+        apex: Number(vm.dialedApexMeters.toFixed(1)),
+      });
+      navigator.clipboard?.writeText(url).catch(() => {});
+      this.showToast('HEADSET INVITE URL COPIED', url, 'success', 5200);
+    });
+
+    // Build device selection chips
+    this.renderDeviceChips();
+    this.refreshModalContent();
+  }
+
+  private openDeviceModal(): void {
+    this.elDeviceModal.style.display = 'flex';
+    this.refreshModalContent();
+  }
+
+  private closeDeviceModal(): void {
+    this.elDeviceModal.style.display = 'none';
+  }
+
+  private renderDeviceChips(): void {
+    this.elDeviceChipsContainer.innerHTML = '';
+    const currentId = UniversalDeviceManager.getInstance().currentProfile.id;
+
+    for (const profile of Object.values(DEVICE_PROFILES)) {
+      const chip = document.createElement('button');
+      chip.className = `apx-device-chip ${profile.id === currentId ? 'is-active' : ''}`;
+      chip.innerHTML = `
+        <span>${profile.shortLabel}</span>
+        <span class="apx-chip-sub">${profile.fovHorizontalDeg}°×${profile.fovVerticalDeg}° • ${profile.baselineFrameRate}Hz</span>
+      `;
+      chip.addEventListener('click', async () => {
+        await UniversalDeviceManager.getInstance().setProfile(profile.id as DeviceProfileId);
+        this.renderDeviceChips();
+        this.refreshModalContent();
+        this.showToast(
+          'PROFILE ACTIVE: ' + profile.label,
+          profile.notes,
+          'success',
+          4500
+        );
+      });
+      this.elDeviceChipsContainer.appendChild(chip);
+    }
+  }
+
+  private refreshModalContent(): void {
+    const mgr = UniversalDeviceManager.getInstance();
+    const p = mgr.currentProfile;
+    const puck = mgr.getPuckTelemetry();
+
+    this.elDeviceBtnLabel.textContent = p.shortLabel;
+    this.elActiveProfileName.textContent = p.label;
+    this.elSpecDisplay.textContent = puck.displayResolution;
+    this.elSpecPuck.textContent = `${puck.processor} • ${puck.ram}`;
+    this.elSpecRefresh.textContent = `${p.baselineFrameRate}Hz ➔ ${p.boostFrameRate}Hz Dynamic`;
+    this.elSpecTemp.textContent = `${puck.thermalPuckTempC}°C (${puck.isDynamic120HzActive ? 'Halo 120Hz Boost' : 'Vapor Chamber Passive'})`;
+
+    const vm = this.deps.challengeSystem.getScoreboardViewModel();
+    mgr.generateInviteQrCodeDataUrl({
+      stage: vm.currentStage.stageIndex,
+      brake: Number(vm.dialedBrakeMeters.toFixed(1)),
+      apex: Number(vm.dialedApexMeters.toFixed(1)),
+    }).then((dataUrl) => {
+      this.elQrImage.src = dataUrl;
+    }).catch(console.warn);
   }
 
   private startSyncLoop(): void {
@@ -630,6 +845,16 @@ export class BroadcastCockpitOverlay {
     }
 
     this.elCareerBadge.textContent = `DAY ${vm.streakDays} STREAK • ELO ${vm.strategistElo} (${vm.licenseTier})`;
+
+    // Dynamic Frame Rate & Puck Telemetry (Project Aero PRD integration)
+    const puckTel = UniversalDeviceManager.getInstance().getPuckTelemetry();
+    this.elFpsBadge.textContent = `${puckTel.targetFps} FPS (${
+      puckTel.isDynamic120HzActive ? 'HALO 120Hz BOOST' : 'DYNAMIC 90Hz'
+    })`;
+    this.elFpsBadge.className = `apx-badge ${
+      puckTel.isDynamic120HzActive ? 'apx-badge-cyan' : 'apx-badge-emerald'
+    }`;
+    this.elPuckBadge.textContent = `PUCK ${puckTel.thermalPuckTempC}°C • XR2 GEN 3`;
 
     // Stage pills
     for (let i = 0; i < 3; i++) {
